@@ -5,22 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Temporary Email – MARC‑Tech</title>
   <style>
-    * { box-sizing: border-box; margin:0; padding:0 }
-    body { font-family: Arial, sans-serif; background:#f4f4f4; color:#333; padding:20px }
+    * { box-sizing:border-box; margin:0; padding:0 }
+    body { font-family:Arial,sans-serif; background:#f4f4f4; color:#333; padding:20px; }
     .container { max-width:600px; margin:0 auto }
-    h1,h2 { margin-bottom:10px }
+    h1 { text-align:center; margin-bottom:20px }
     section { background:#fff; padding:15px; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.1); margin-bottom:20px }
     .row { display:flex; flex-wrap:wrap; gap:10px; align-items:center }
     .row p { flex:1; word-break:break-all }
-    input, textarea, button { width:100%; padding:10px; margin-top:8px; margin-bottom:12px; border:1px solid #ccc; border-radius:4px }
-    button { background:#007bff; color:#fff; border:none; cursor:pointer; transition:background .2s }
-    button:disabled { opacity:.6; cursor:not-allowed }
-    button:hover:not(:disabled) { background:#0056b3 }
-    .message { padding:12px; border:1px solid #ddd; border-radius:6px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,0.05) }
-    .message p { margin-bottom:8px }
-    .message button { width:auto; padding:6px 12px; font-size:.9rem }
-    #sendStatus { color:#007bff; margin-top:8px }
-    .footer { text-align:center; font-size:.85rem; color:#777; margin-top:40px }
+    input, textarea, button { width:100%; padding:10px; margin-top:8px; margin-bottom:12px; border:1px solid #ccc; border-radius:4px; }
+    button { background:#007bff; color:#fff; border:none; cursor:pointer; transition:background .2s; }
+    button:disabled { opacity:.6; cursor:not-allowed; }
+    button:hover:not(:disabled) { background:#0056b3; }
+    .message { padding:12px; border:1px solid #ddd; border-radius:6px; margin-bottom:12px; box-shadow:0 1px 4px rgba(0,0,0,0.05); }
+    .message p { margin-bottom:8px; }
+    .message button { width:auto; padding:6px 12px; font-size:.9rem; }
+    #sendStatus { color:#007bff; margin-top:8px; }
+    .footer { text-align:center; font-size:.85rem; color:#777; margin-top:40px; }
   </style>
 </head>
 <body>
@@ -48,7 +48,7 @@
     <!-- 3. Envoi d'un e‑mail -->
     <section>
       <h2>3. Envoyer un e‑mail depuis l’adresse jetable</h2>
-      <label for="fromEmail">De (MailSAC) :</label>
+      <label for="fromEmail">De :</label>
       <input type="email" id="fromEmail" readonly>
 
       <label for="toEmail">À :</label>
@@ -171,9 +171,9 @@
 
     // 4. Envoyer email via Mail Sender
     btnSend.addEventListener('click', async () => {
-      const to    = toInput.value.trim();
-      const subj  = subjectInput.value.trim();
-      const body  = bodyInput.value.trim();
+      const to   = toInput.value.trim();
+      const subj = subjectInput.value.trim();
+      const body = bodyInput.value.trim();
       if (!currentEmail || !to || !subj || !body) {
         sendStatus.textContent = 'Merci de remplir tous les champs.';
         return;
@@ -183,26 +183,24 @@
 
       try {
         const payload = {
-          sendto:  to,
-          name:    currentEmail,
-          replyTo: currentEmail,
-          ishtml:  'false',
-          title:   subj,
-          body:    body
+          sendto:   to,
+          name:     currentEmail,
+          replyTo:  currentEmail,
+          ishtml:   'false',
+          title:    subj,
+          body:     body
         };
-
-        const res = await fetch(`https://${MAIL_SENDER_HOST}/`, {
-          method: 'POST',
+        const res    = await fetch(`https://${MAIL_SENDER_HOST}/`, {
+          method:  'POST',
           headers: {
-            'Content-Type':    'application/json',
-            'x-rapidapi-host': MAIL_SENDER_HOST,
-            'x-rapidapi-key':  MAIL_SENDER_KEY
+            'Content-Type':      'application/json',
+            'x-rapidapi-host':   MAIL_SENDER_HOST,
+            'x-rapidapi-key':    MAIL_SENDER_KEY
           },
           body: JSON.stringify(payload)
         });
-
         const result = await res.json();
-        console.log('Mail Sender response →', result);
+        console.log('Mail Sender →', result);
 
         if (result.success || result.id) {
           sendStatus.textContent = '✅ Email envoyé !';
@@ -210,9 +208,11 @@
           subjectInput.value = '';
           bodyInput.value = '';
         } else {
-          const errMsg = result.errorMessage || JSON.stringify(result);
-          sendStatus.textContent = `❌ Échec : ${errMsg}`;
-          console.error('Erreur détaillée →', result);
+          // Affiche le message d’erreur et propose de réessayer si temporaire
+          sendStatus.innerHTML = `❌ Échec : ${result.message || JSON.stringify(result)}`;
+          if (result.error_type === 'temporary') {
+            sendStatus.innerHTML += `<br><small>Destinataire non autorisé pour le moment. Réessayez plus tard ou changez d’adresse.</small>`;
+          }
         }
       } catch (err) {
         sendStatus.textContent = '❌ Erreur réseau : ' + err.message;
